@@ -9,7 +9,7 @@
 [![PyPi Version](https://img.shields.io/pypi/v/pyether?color=%234F8EE9)](https://pypi.org/project/pyether/)
 
 
-The package, containing wrapper over web3.py operations for interacting through Wallet entities.
+The web3.py operation wrapper, offering interaction through Wallet instances.
 
 - **[Overview](#quick-overview)**
 - **[Bug reports](https://github.com/CrocoFactory/ether-py/issues)**
