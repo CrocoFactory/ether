@@ -1,7 +1,7 @@
 """
 ether
 ~~~~~~~~~~~~~~
-The package, containing wrapper over web3.py operations for interacting through Wallet units.
+The web3.py operation wrapper, offering interaction through Wallet instances.
 
 Usage example:
    >>> from ether import Wallet
