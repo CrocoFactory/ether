@@ -82,7 +82,8 @@ class AsyncWallet(_BaseWallet):
             closure: AsyncContractFunction,
             value: TokenAmount = 0,
             gas: Optional[int] = None,
-            gas_price: Optional[Wei] = None
+            max_fee: Wei | None = None,
+            max_priority_fee: Wei | None = None,
     ) -> HexBytes:
         """Builds and executes a transaction.
 
@@ -99,13 +100,14 @@ class AsyncWallet(_BaseWallet):
             closure (AsyncContractFunction): The contract function to call.
             value (TokenAmount, optional): Amount of network currency in Wei. Defaults to 0.
             gas (Optional[int], optional): Gas limit. Defaults to None.
-            gas_price (Optional[Wei], optional): Gas price in Wei. Defaults to None.
+            max_fee (Wei, optional): The maximum fee per gas. Defaults to None.
+            max_priority_fee: (Wei, optional) The maximum priority fee per gas. Defaults to None.
 
         Returns:
             HexBytes: The transaction hash.
         """
         gas_ = Wei(300_000) if not gas else gas
-        tx_params = await self.build_tx_params(value=value, gas=gas_, gas_price=gas_price)
+        tx_params = await self.build_tx_params(value=value, gas=gas_, max_fee=max_fee, max_priority_fee=max_priority_fee)
         tx_params = await closure.build_transaction(tx_params)
 
         if not gas:
@@ -118,7 +120,10 @@ class AsyncWallet(_BaseWallet):
             self,
             token: Token,
             contract_address: AnyAddress,
-            token_amount: TokenAmount
+            token_amount: TokenAmount,
+            gas: Optional[int] = None,
+            max_fee: Wei | None = None,
+            max_priority_fee: Wei | None = None,
     ) -> HexBytes:
         """Approves token usage for a specific contract.
 
@@ -126,6 +131,9 @@ class AsyncWallet(_BaseWallet):
             token (Token): The token instance.
             contract_address (AnyAddress): The contract address.
             token_amount (TokenAmount): Amount of tokens to approve in Wei.
+            gas (Optional[int], optional): Gas limit. Defaults to None.
+            max_fee (Wei, optional): The maximum fee per gas. Defaults to None.
+            max_priority_fee: (Wei, optional) The maximum priority fee per gas. Defaults to None.
 
         Returns:
             HexBytes: The transaction hash.
@@ -139,7 +147,10 @@ class AsyncWallet(_BaseWallet):
         token = self._load_token_contract(token.address)
         contract_address = self.provider.to_checksum_address(contract_address)
         return await self.build_and_transact(
-            token.functions.approve(contract_address, token_amount)
+            token.functions.approve(contract_address, token_amount),
+            gas=gas,
+            max_fee=max_fee,
+            max_priority_fee=max_priority_fee
         )
 
     async def build_tx_params(
@@ -147,8 +158,10 @@ class AsyncWallet(_BaseWallet):
             value: TokenAmount,
             recipient: Optional[AnyAddress] = None,
             raw_data: Optional[bytes | HexStr] = None,
-            gas: Wei = Wei(300_000),
-            gas_price: Optional[Wei] = None
+            gas: Wei = Wei(100_000),
+            max_fee: Wei | None = None,
+            max_priority_fee: Wei | None = None,
+            tx_type: str | None = None,
     ) -> TxParams:
         """Builds transaction parameters.
 
@@ -157,12 +170,16 @@ class AsyncWallet(_BaseWallet):
             recipient (Optional[AnyAddress], optional): The recipient address. Defaults to None.
             raw_data (Optional[bytes | HexStr], optional): Transaction data. Defaults to None.
             gas (Wei, optional): The gas limit. Defaults to 300,000 Wei.
-            gas_price (Optional[Wei], optional): The gas price. Defaults to None.
+            max_fee (Wei, optional): The maximum fee per gas. Defaults to None.
+            max_priority_fee: (Wei, optional) The maximum priority fee per gas. Defaults to None.
+            tx_type (str | None, optional): The transaction type. Defaults to None.
 
         Returns:
             TxParams: The transaction parameters.
         """
-        provider = self.provider
+        if not max_fee:
+            latest_block = await self.provider.eth.get_block('latest')
+            max_fee = latest_block['baseFeePerGas'] + 1000
 
         tx_params = {
             'from': self.public_key,
@@ -170,7 +187,8 @@ class AsyncWallet(_BaseWallet):
             'nonce': self.nonce,
             'value': value,
             'gas': gas,
-            'gasPrice': gas_price if gas_price else await provider.eth.gas_price,
+            'maxFeePerGas': max_fee,
+            'maxPriorityFeePerGas': max_priority_fee or await self.provider.eth.max_priority_fee
         }
 
         if recipient:
@@ -178,6 +196,9 @@ class AsyncWallet(_BaseWallet):
 
         if raw_data:
             tx_params['data'] = raw_data
+
+        if tx_type:
+            tx_params['type'] = tx_type
 
         return tx_params
 
@@ -203,7 +224,8 @@ class AsyncWallet(_BaseWallet):
             recipient: AnyAddress,
             token_amount: TokenAmount,
             gas: Optional[Wei] = None,
-            gas_price: Optional[Wei] = None
+            max_fee: Wei | None = None,
+            max_priority_fee: Wei | None = None,
     ) -> HexBytes:
         """Transfers a token amount to another wallet.
 
@@ -212,7 +234,8 @@ class AsyncWallet(_BaseWallet):
             recipient (AnyAddress): The recipient address.
             token_amount (TokenAmount): The amount of tokens to transfer in Wei.
             gas (Optional[Wei], optional): The gas limit. Defaults to None.
-            gas_price (Optional[Wei], optional): The gas price in Wei. Defaults to None.
+            max_fee (Wei, optional): The maximum fee per gas. Defaults to None.
+            max_priority_fee: (Wei, optional) The maximum priority fee per gas. Defaults to None.
 
         Returns:
             HexBytes: The transaction hash.
@@ -226,7 +249,7 @@ class AsyncWallet(_BaseWallet):
         token_contract = self._load_token_contract(token.address)
         recipient = self.provider.to_checksum_address(recipient)
         closure = token_contract.functions.transfer(recipient, token_amount)
-        return await self.build_and_transact(closure, Wei(0), gas, gas_price)
+        return await self.build_and_transact(closure, Wei(0), gas, max_fee, max_priority_fee)
 
     async def get_balance_of(self, token: Token, convert: bool = False) -> float:
         """Gets the balance of a specified token.

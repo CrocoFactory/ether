@@ -478,7 +478,8 @@ class _BaseWallet(ABC):
             closure: ContractFunction | AsyncContractFunction,
             value: TokenAmount = 0,
             gas: Optional[int] = None,
-            gas_price: Optional[Wei] = None
+            max_fee: Wei | None = None,
+            max_priority_fee: Wei | None = None,
     ) -> HexBytes:
         """
         Builds and executes a transaction.
@@ -487,7 +488,8 @@ class _BaseWallet(ABC):
             closure (ContractFunction | AsyncContractFunction): Contract function.
             value (TokenAmount, optional): Transaction value. Defaults to 0.
             gas (Optional[int], optional): Gas limit. Defaults to None.
-            gas_price (Optional[Wei], optional): Gas price. Defaults to None.
+            max_fee (Wei, optional): The maximum fee per gas. Defaults to None.
+            max_priority_fee: (Wei, optional) The maximum priority fee per gas. Defaults to None.
 
         Returns:
             HexBytes: Transaction hash.
@@ -499,7 +501,10 @@ class _BaseWallet(ABC):
             self,
             token: Token,
             contract_address: AnyAddress,
-            token_amount: TokenAmount
+            token_amount: TokenAmount,
+            gas: Optional[int] = None,
+            max_fee: Wei | None = None,
+            max_priority_fee: Wei | None = None,
     ) -> HexBytes:
         """
         Approves a specified amount of tokens for a contract.
@@ -508,6 +513,9 @@ class _BaseWallet(ABC):
             token (Token): Token object.
             contract_address (AnyAddress): Contract address.
             token_amount (TokenAmount): Amount of tokens to approve.
+            gas (Optional[int], optional): Gas limit. Defaults to None.
+            max_fee (Wei, optional): The maximum fee per gas. Defaults to None.
+            max_priority_fee: (Wei, optional) The maximum priority fee per gas. Defaults to None.
 
         Returns:
             HexBytes: Transaction hash.
@@ -521,7 +529,9 @@ class _BaseWallet(ABC):
             recipient: Optional[AnyAddress] = None,
             raw_data: Optional[bytes | HexStr] = None,
             gas: Wei = Wei(300_000),
-            gas_price: Optional[Wei] = None
+            max_fee: Wei | None = None,
+            max_priority_fee: Wei | None = None,
+            tx_type: str | None = None
     ) -> TxParams:
         """
         Builds the transaction parameters.
@@ -531,7 +541,9 @@ class _BaseWallet(ABC):
             recipient (Optional[AnyAddress], optional): Recipient address. Defaults to None.
             raw_data (Optional[bytes | HexStr], optional): Raw data. Defaults to None.
             gas (Wei, optional): Gas limit. Defaults to 300,000.
-            gas_price (Optional[Wei], optional): Gas price. Defaults to None.
+            max_fee (Wei, optional): The maximum fee per gas. Defaults to None.
+            max_priority_fee: (Wei, optional) The maximum priority fee per gas. Defaults to None.
+            tx_type (str | None, optional): The transaction type. Defaults to None.
 
         Returns:
             TxParams: Transaction parameters.
@@ -558,7 +570,8 @@ class _BaseWallet(ABC):
             recipient: AnyAddress,
             token_amount: TokenAmount,
             gas: Optional[Wei] = None,
-            gas_price: Optional[Wei] = None
+            max_fee: Wei | None = None,
+            max_priority_fee: Wei | None = None,
     ) -> HexBytes:
         """
         Transfers tokens to a recipient.
@@ -568,7 +581,8 @@ class _BaseWallet(ABC):
             recipient (AnyAddress): Recipient address.
             token_amount (TokenAmount): Amount of tokens to transfer.
             gas (Optional[Wei], optional): Gas limit. Defaults to None.
-            gas_price (Optional[Wei], optional): Gas price. Defaults to None.
+            max_fee (Wei, optional): The maximum fee per gas. Defaults to None.
+            max_priority_fee: (Wei, optional) The maximum priority fee per gas. Defaults to None.
 
         Returns:
             HexBytes: Transaction hash.
