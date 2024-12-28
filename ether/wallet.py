@@ -5,7 +5,7 @@ from eth_typing import HexStr
 from hexbytes import HexBytes
 from web3 import Web3
 from web3.contract.contract import ContractFunction, Contract
-from web3.types import TxParams, Wei
+from web3.types import TxParams, Wei, ABI
 from ether._base_wallet import _BaseWallet
 from ether.types import Network, TokenAmount, AnyAddress, Token
 from ether.utils import is_checksum_address
@@ -40,7 +40,7 @@ class Wallet(_BaseWallet):
         """
         return self._provider
 
-    def _load_token_contract(self, address: AnyAddress) -> Contract:
+    def _load_token_contract(self, address: AnyAddress, abi: ABI | None = None) -> Contract:
         """Loads the token contract for the given address.
 
         Args:
@@ -49,7 +49,7 @@ class Wallet(_BaseWallet):
         Returns:
             Contract: The token contract instance.
         """
-        return super()._load_token_contract(address)
+        return super()._load_token_contract(address, abi)
 
     def get_balance(self, from_wei: bool = False) -> float | Wei:
         """Gets the balance of the current account in Ethereum or Wei units.
@@ -86,6 +86,7 @@ class Wallet(_BaseWallet):
             gas: Optional[int] = None,
             max_fee: Wei | None = None,
             max_priority_fee: Wei | None = None,
+            validate_status: bool = False
     ) -> HexBytes:
         """
         Builds and executes a transaction.
@@ -96,6 +97,7 @@ class Wallet(_BaseWallet):
             gas (Optional[int], optional): Gas limit. Defaults to None.
             max_fee (Wei, optional): The maximum fee per gas. Defaults to None.
             max_priority_fee: (Wei, optional) The maximum priority fee per gas. Defaults to None.
+            validate_status (bool, optional): Whether to validate the transaction status. Defaults to False.
 
         Returns:
             HexBytes: Transaction hash.
@@ -108,7 +110,7 @@ class Wallet(_BaseWallet):
             gas = self.estimate_gas(tx_params)
             tx_params['gas'] = gas
 
-        return self.transact(tx_params)
+        return self.transact(tx_params, validate_status=validate_status)
 
     def approve(
             self,
@@ -118,6 +120,7 @@ class Wallet(_BaseWallet):
             gas: Optional[int] = None,
             max_fee: Wei | None = None,
             max_priority_fee: Wei | None = None,
+            validate_status: bool = False
     ) -> HexBytes:
         """
         Approves a specified amount of tokens for a contract.
@@ -129,6 +132,7 @@ class Wallet(_BaseWallet):
             gas (Optional[int], optional): Gas limit. Defaults to None.
             max_fee (Wei, optional): The maximum fee per gas. Defaults to None.
             max_priority_fee: (Wei, optional) The maximum priority fee per gas. Defaults to None.
+            validate_status (bool, optional): Whether to validate the transaction status. Defaults to False.
 
         Returns:
             HexBytes: Transaction hash.
@@ -142,7 +146,8 @@ class Wallet(_BaseWallet):
             token.functions.approve(contract_address, token_amount),
             gas=gas,
             max_fee=max_fee,
-            max_priority_fee=max_priority_fee
+            max_priority_fee=max_priority_fee,
+            validate_status=validate_status
         )
 
     def build_tx_params(
@@ -226,6 +231,7 @@ class Wallet(_BaseWallet):
             gas: Optional[Wei] = None,
             max_fee: Wei | None = None,
             max_priority_fee: Wei | None = None,
+            validate_status: bool = False
     ) -> HexBytes:
         """
         Transfers tokens to a recipient.
@@ -237,6 +243,7 @@ class Wallet(_BaseWallet):
             gas (Optional[Wei], optional): Gas limit. Defaults to None.
             max_fee (Wei, optional): The maximum fee per gas. Defaults to None.
             max_priority_fee: (Wei, optional) The maximum priority fee per gas. Defaults to None.
+            validate_status (bool, optional): Whether to validate the transaction status. Defaults to False.
 
         Returns:
             HexBytes: Transaction hash.
@@ -247,7 +254,7 @@ class Wallet(_BaseWallet):
         token_contract = self._load_token_contract(token.address)
         recipient = self.provider.to_checksum_address(recipient)
         closure = token_contract.functions.transfer(recipient, token_amount)
-        return self.build_and_transact(closure, Wei(0), gas, max_fee, max_priority_fee)
+        return self.build_and_transact(closure, Wei(0), gas, max_fee, max_priority_fee, validate_status)
 
     def get_balance_of(self, token: Token, convert: bool = False) -> float:
         """Gets the balance of a specified token.
@@ -267,11 +274,12 @@ class Wallet(_BaseWallet):
 
         return balance
 
-    def get_token(self, address: AnyAddress) -> Token:
+    def get_token(self, address: AnyAddress, abi: ABI | None = None) -> Token:
         """Retrieves token information from the specified address.
 
         Args:
             address (AnyAddress): The token contract address.
+            abi (ABI | None, optional): Contract ABI. Defaults to USDT ABI.
 
         Returns:
             Token: The token instance.
@@ -283,7 +291,7 @@ class Wallet(_BaseWallet):
             raise ValueError('Invalid token address is provided')
 
         address = self._provider.to_checksum_address(address)
-        token_contract = self._load_token_contract(address)
+        token_contract = self._load_token_contract(address, abi)
         symbol = token_contract.functions.symbol().call()
         decimals = token_contract.functions.decimals().call()
 

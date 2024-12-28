@@ -394,12 +394,13 @@ class _BaseWallet(ABC):
             return json.load(file)
 
     @lru_cache(maxsize=6)
-    def _load_token_contract(self, address: AnyAddress) -> AsyncContract | Contract:
+    def _load_token_contract(self, address: AnyAddress, abi: ABI | None = None) -> AsyncContract | Contract:
         """
         Loads the token contract for the specified address.
 
         Args:
             address (AnyAddress): Token address.
+            abi (ABI | None, optional): Contract ABI. Defaults to USDT ABI.
 
         Returns:
             AsyncContract | Contract: The token contract.
@@ -409,7 +410,10 @@ class _BaseWallet(ABC):
 
         provider = self.provider
         address = provider.to_checksum_address(address)
-        abi = self._get_erc20_abi()
+
+        if not abi:
+            abi = self._get_erc20_abi()
+
         contract = provider.eth.contract(address=address, abi=abi)
         return contract
 
@@ -433,12 +437,13 @@ class _BaseWallet(ABC):
         return explorer_url
 
     @abstractmethod
-    def get_token(self, address: AnyAddress) -> Token:
+    def get_token(self, address: AnyAddress, abi: ABI | None = None) -> Token:
         """
         Retrieves token information for the specified address.
 
         Args:
             address (AnyAddress): Token address.
+            abi (ABI | None, optional): Contract ABI. Defaults to USDT ABI.
 
         Returns:
             Token: Token object.
@@ -480,6 +485,7 @@ class _BaseWallet(ABC):
             gas: Optional[int] = None,
             max_fee: Wei | None = None,
             max_priority_fee: Wei | None = None,
+            validate_status: bool = False
     ) -> HexBytes:
         """
         Builds and executes a transaction.
@@ -490,6 +496,7 @@ class _BaseWallet(ABC):
             gas (Optional[int], optional): Gas limit. Defaults to None.
             max_fee (Wei, optional): The maximum fee per gas. Defaults to None.
             max_priority_fee: (Wei, optional) The maximum priority fee per gas. Defaults to None.
+            validate_status (bool, optional): Whether to validate the transaction status. Defaults to False.
 
         Returns:
             HexBytes: Transaction hash.
@@ -505,6 +512,7 @@ class _BaseWallet(ABC):
             gas: Optional[int] = None,
             max_fee: Wei | None = None,
             max_priority_fee: Wei | None = None,
+            validate_status: bool = False
     ) -> HexBytes:
         """
         Approves a specified amount of tokens for a contract.
@@ -516,6 +524,7 @@ class _BaseWallet(ABC):
             gas (Optional[int], optional): Gas limit. Defaults to None.
             max_fee (Wei, optional): The maximum fee per gas. Defaults to None.
             max_priority_fee: (Wei, optional) The maximum priority fee per gas. Defaults to None.
+            validate_status (bool, optional): Whether to validate the transaction status. Defaults to False.
 
         Returns:
             HexBytes: Transaction hash.
@@ -573,6 +582,7 @@ class _BaseWallet(ABC):
             gas: Optional[Wei] = None,
             max_fee: Wei | None = None,
             max_priority_fee: Wei | None = None,
+            validate_status: bool = False
     ) -> HexBytes:
         """
         Transfers tokens to a recipient.
@@ -584,6 +594,7 @@ class _BaseWallet(ABC):
             gas (Optional[Wei], optional): Gas limit. Defaults to None.
             max_fee (Wei, optional): The maximum fee per gas. Defaults to None.
             max_priority_fee: (Wei, optional) The maximum priority fee per gas. Defaults to None.
+            validate_status (bool, optional): Whether to validate the transaction status. Defaults to False.
 
         Returns:
             HexBytes: Transaction hash.
