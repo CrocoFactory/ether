@@ -181,7 +181,7 @@ class Wallet(_BaseWallet):
             'value': value,
             'gas': gas,
             'maxFeePerGas': max_fee,
-            'maxPriorityFeePerGas': max_priority_fee or max_fee * 0.1
+            'maxPriorityFeePerGas': max_priority_fee or int(max_fee * 0.05)
         }
 
         if recipient:
