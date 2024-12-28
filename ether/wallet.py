@@ -195,12 +195,13 @@ class Wallet(_BaseWallet):
 
         return tx_params
 
-    def transact(self, tx_params: TxParams) -> HexBytes:
+    def transact(self, tx_params: TxParams, validate_status: bool = False) -> HexBytes:
         """
         Executes a transaction.
 
         Args:
             tx_params (TxParams): Transaction parameters.
+            validate_status: (bool): Whether to validate the transaction status. Defaults to False.
 
         Returns:
             HexBytes: Transaction hash.
@@ -209,6 +210,11 @@ class Wallet(_BaseWallet):
         signed_transaction = provider.eth.account.sign_transaction(tx_params, self.private_key)
         tx_hash = provider.eth.send_raw_transaction(signed_transaction.rawTransaction)
         self._nonce += 1
+
+        if validate_status:
+            receipt = provider.eth.wait_for_transaction_receipt(tx_hash)
+            if receipt.status != 1:
+                raise ValueError(f"Transaction failed with status {receipt.status}. Receipt: {receipt}")
 
         return tx_hash
 

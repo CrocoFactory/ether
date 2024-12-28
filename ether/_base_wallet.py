@@ -551,12 +551,13 @@ class _BaseWallet(ABC):
         pass
 
     @abstractmethod
-    def transact(self, tx_params: TxParams) -> HexBytes:
+    def transact(self, tx_params: TxParams, validate_status: bool = False) -> HexBytes:
         """
         Executes a transaction.
 
         Args:
             tx_params (TxParams): Transaction parameters.
+            validate_status (bool, optional): Whether to validate the transaction status. Defaults to False.
 
         Returns:
             HexBytes: Transaction hash.

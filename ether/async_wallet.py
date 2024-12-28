@@ -202,19 +202,29 @@ class AsyncWallet(_BaseWallet):
 
         return tx_params
 
-    async def transact(self, tx_params: TxParams) -> HexBytes:
-        """Executes a transaction using the given parameters.
+    async def transact(self, tx_params: TxParams, validate_status: bool = False) -> HexBytes:
+        """
+        Executes a transaction asynchronously.
 
         Args:
-            tx_params (TxParams): The transaction parameters.
+            tx_params (TxParams): Transaction parameters.
+            validate_status (bool, optional): Whether to validate the transaction status. Defaults to False.
 
         Returns:
-            HexBytes: The transaction hash.
+            HexBytes: Transaction hash.
+
+        Raises:
+            ValueError: If the transaction status is invalid.
         """
         provider = self.provider
         signed_transaction = provider.eth.account.sign_transaction(tx_params, self.private_key)
         tx_hash = await provider.eth.send_raw_transaction(signed_transaction.rawTransaction)
         self._nonce += 1
+
+        if validate_status:
+            receipt = await provider.eth.wait_for_transaction_receipt(tx_hash)
+            if receipt.status != 1:
+                raise ValueError(f"Transaction failed with status {receipt.status}. Receipt: {receipt}")
 
         return tx_hash
 
