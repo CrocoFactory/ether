@@ -188,7 +188,7 @@ class AsyncWallet(_BaseWallet):
             'value': value,
             'gas': gas,
             'maxFeePerGas': max_fee,
-            'maxPriorityFeePerGas': max_priority_fee or await self.provider.eth.max_priority_fee
+            'maxPriorityFeePerGas': max_priority_fee or max_fee * 0.1
         }
 
         if recipient:
