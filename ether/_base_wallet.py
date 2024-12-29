@@ -433,7 +433,7 @@ class _BaseWallet(ABC):
             raise TypeError(f"Invalid transaction hash type. Hash must be a `bytes` object or `str`. "
                             f"Actual type:  {type(tx_hash)}")
 
-        explorer_url = f'{self.network["explorer"]}/tx/{tx_hash}'
+        explorer_url = f'{self.network.explorer}/tx/{tx_hash}'
         return explorer_url
 
     @abstractmethod
