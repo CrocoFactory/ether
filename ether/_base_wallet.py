@@ -212,13 +212,13 @@ class _BaseWallet(ABC):
     @classmethod
     def create(cls, network: Network | str = 'Ethereum') -> Self:
         """
-        Creates a new digital wallet.
+        Creates a new ethereum account and associated Wallet | AsyncWallet instance.
 
         Args:
-            network (Network | str): Name of supported network or a custom network object.
+            network: The name of the built-in Ethereum-based network or custom network configuration
 
         Returns:
-            Self: Instance of AsyncWallet.
+            Self: Instance of Wallet | AsyncWallet.
         """
         private_key = Account.create().key
         return cls(private_key, network)
@@ -236,20 +236,20 @@ class _BaseWallet(ABC):
     @property
     def network(self) -> Network:
         """
-        Gets the current network.
+        Gets the current [Network][ether.Network] instance.
 
         Returns:
-            Network: The current network.
+            Network: The current network instance.
         """
         return self._network
 
     @network.setter
     def network(self, value: Network | str) -> None:
         """
-        Sets the network of the wallet.
+        Sets the [Network][ether.Network] of the wallet.
 
         Args:
-            value (Network | str): Name of supported network or a custom network object.
+            value: Name of built-innetwork or a custom network configuration.
         """
         is_async = self.__is_async
 
@@ -273,47 +273,47 @@ class _BaseWallet(ABC):
     @property
     def private_key(self) -> str:
         """
-        Returns the private key of the current account.
+        Returns the account's key required for making (signing) transactions.
 
         Returns:
-            str: Private key of the current account.
+            str: Account's key required for making (signing) transactions.
         """
         return self.__private_key
 
     @property
     def public_key(self) -> ChecksumAddress:
         """
-        Returns the public key of the current account.
+        Returns the account's key used for sharing payment details.
 
         Returns:
-            ChecksumAddress: Public key of the current account.
+            ChecksumAddress: The account's key used for sharing payment details.
         """
         return self.__public_key
 
     @property
     def nonce(self) -> int:
         """
-        Returns the nonce of the current wallet.
+        Returns the account's overall number of transactions.
 
         Returns:
-            int: Nonce of the current wallet.
+            int: Account's overall number of transactions.
         """
         return self._nonce
 
     @property
     def native_token(self) -> str:
         """
-        Gets the native token of the network.
+        Gets the native token of the current network.
 
         Returns:
-            str: The native token.
+            str: The native token of the current network.
         """
         return self.network.token
 
     @classmethod
     def network_map(cls) -> dict[str, Network]:
         """
-        Returns a copy of the network map.
+        Returns a copy of the network map, containing information about built-in networks.
 
         Returns:
             dict[str, Network]: The network map.
@@ -325,7 +325,7 @@ class _BaseWallet(ABC):
         Checks if the token is the native token of the network.
 
         Args:
-            token (str): Token symbol.
+            token: Token symbol.
 
         Returns:
             bool: True if the token is native, False otherwise.
@@ -353,7 +353,7 @@ class _BaseWallet(ABC):
         if isinstance(network, str) and network in mapping.keys():
             network = mapping[network]
         elif not isinstance(network, Network):
-            raise TypeError(f"Network must be a {Network} object or name of a supported "
+            raise TypeError(f"Network must be a {Network} object or name of a built-in "
                             f"network. Actual type: {type(network)}")
 
         return network
@@ -373,7 +373,7 @@ class _BaseWallet(ABC):
         chain_id = provider.eth.chain_id
         if network.chain_id is not None and chain_id != network.chain_id:
             raise ValueError(f'Chain id of {Network} info must be equal to the actual chain`s id. Try to find it by: '
-                             f'https://chainlist.org/?search={network["network"].lower()}')
+                             f'https://chainlist.org/?search={network.name.lower()}')
         else:
             network.chain_id = chain_id
 
@@ -394,12 +394,13 @@ class _BaseWallet(ABC):
             return json.load(file)
 
     @lru_cache(maxsize=6)
-    def _load_token_contract(self, address: AnyAddress) -> AsyncContract | Contract:
+    def _load_token_contract(self, address: AnyAddress, abi: ABI | None = None) -> AsyncContract | Contract:
         """
         Loads the token contract for the specified address.
 
         Args:
             address (AnyAddress): Token address.
+            abi (ABI | None, optional): Contract ABI. Defaults to USDT ABI.
 
         Returns:
             AsyncContract | Contract: The token contract.
@@ -409,7 +410,10 @@ class _BaseWallet(ABC):
 
         provider = self.provider
         address = provider.to_checksum_address(address)
-        abi = self._get_erc20_abi()
+
+        if not abi:
+            abi = self._get_erc20_abi()
+
         contract = provider.eth.contract(address=address, abi=abi)
         return contract
 
@@ -418,7 +422,7 @@ class _BaseWallet(ABC):
         Returns the explorer URL for the given transaction hash.
 
         Args:
-            tx_hash (HexBytes | str): Transaction hash.
+            tx_hash: Transaction hash.
 
         Returns:
             str: Explorer URL for the transaction.
@@ -429,16 +433,17 @@ class _BaseWallet(ABC):
             raise TypeError(f"Invalid transaction hash type. Hash must be a `bytes` object or `str`. "
                             f"Actual type:  {type(tx_hash)}")
 
-        explorer_url = f'{self.network["explorer"]}/tx/{tx_hash}'
+        explorer_url = f'{self.network.explorer}/tx/{tx_hash}'
         return explorer_url
 
     @abstractmethod
-    def get_token(self, address: AnyAddress) -> Token:
+    def get_token(self, address: AnyAddress, abi: ABI | None = None) -> Token:
         """
         Retrieves token information for the specified address.
 
         Args:
             address (AnyAddress): Token address.
+            abi (ABI | None, optional): Contract ABI. Defaults to USDT ABI.
 
         Returns:
             Token: Token object.
@@ -478,7 +483,9 @@ class _BaseWallet(ABC):
             closure: ContractFunction | AsyncContractFunction,
             value: TokenAmount = 0,
             gas: Optional[int] = None,
-            gas_price: Optional[Wei] = None
+            max_fee: Wei | None = None,
+            max_priority_fee: Wei | None = None,
+            validate_status: bool = False
     ) -> HexBytes:
         """
         Builds and executes a transaction.
@@ -487,7 +494,9 @@ class _BaseWallet(ABC):
             closure (ContractFunction | AsyncContractFunction): Contract function.
             value (TokenAmount, optional): Transaction value. Defaults to 0.
             gas (Optional[int], optional): Gas limit. Defaults to None.
-            gas_price (Optional[Wei], optional): Gas price. Defaults to None.
+            max_fee (Wei, optional): The maximum fee per gas. Defaults to None.
+            max_priority_fee: (Wei, optional) The maximum priority fee per gas. Defaults to None.
+            validate_status (bool, optional): Whether to validate the transaction status. Defaults to False.
 
         Returns:
             HexBytes: Transaction hash.
@@ -499,7 +508,11 @@ class _BaseWallet(ABC):
             self,
             token: Token,
             contract_address: AnyAddress,
-            token_amount: TokenAmount
+            token_amount: TokenAmount,
+            gas: Optional[int] = None,
+            max_fee: Wei | None = None,
+            max_priority_fee: Wei | None = None,
+            validate_status: bool = False
     ) -> HexBytes:
         """
         Approves a specified amount of tokens for a contract.
@@ -508,6 +521,10 @@ class _BaseWallet(ABC):
             token (Token): Token object.
             contract_address (AnyAddress): Contract address.
             token_amount (TokenAmount): Amount of tokens to approve.
+            gas (Optional[int], optional): Gas limit. Defaults to None.
+            max_fee (Wei, optional): The maximum fee per gas. Defaults to None.
+            max_priority_fee: (Wei, optional) The maximum priority fee per gas. Defaults to None.
+            validate_status (bool, optional): Whether to validate the transaction status. Defaults to False.
 
         Returns:
             HexBytes: Transaction hash.
@@ -521,7 +538,9 @@ class _BaseWallet(ABC):
             recipient: Optional[AnyAddress] = None,
             raw_data: Optional[bytes | HexStr] = None,
             gas: Wei = Wei(300_000),
-            gas_price: Optional[Wei] = None
+            max_fee: Wei | None = None,
+            max_priority_fee: Wei | None = None,
+            tx_type: str | None = None
     ) -> TxParams:
         """
         Builds the transaction parameters.
@@ -531,7 +550,9 @@ class _BaseWallet(ABC):
             recipient (Optional[AnyAddress], optional): Recipient address. Defaults to None.
             raw_data (Optional[bytes | HexStr], optional): Raw data. Defaults to None.
             gas (Wei, optional): Gas limit. Defaults to 300,000.
-            gas_price (Optional[Wei], optional): Gas price. Defaults to None.
+            max_fee (Wei, optional): The maximum fee per gas. Defaults to None.
+            max_priority_fee: (Wei, optional) The maximum priority fee per gas. Defaults to None.
+            tx_type (str | None, optional): The transaction type. Defaults to None.
 
         Returns:
             TxParams: Transaction parameters.
@@ -539,12 +560,13 @@ class _BaseWallet(ABC):
         pass
 
     @abstractmethod
-    def transact(self, tx_params: TxParams) -> HexBytes:
+    def transact(self, tx_params: TxParams, validate_status: bool = False) -> HexBytes:
         """
         Executes a transaction.
 
         Args:
             tx_params (TxParams): Transaction parameters.
+            validate_status (bool, optional): Whether to validate the transaction status. Defaults to False.
 
         Returns:
             HexBytes: Transaction hash.
@@ -558,7 +580,9 @@ class _BaseWallet(ABC):
             recipient: AnyAddress,
             token_amount: TokenAmount,
             gas: Optional[Wei] = None,
-            gas_price: Optional[Wei] = None
+            max_fee: Wei | None = None,
+            max_priority_fee: Wei | None = None,
+            validate_status: bool = False
     ) -> HexBytes:
         """
         Transfers tokens to a recipient.
@@ -568,7 +592,9 @@ class _BaseWallet(ABC):
             recipient (AnyAddress): Recipient address.
             token_amount (TokenAmount): Amount of tokens to transfer.
             gas (Optional[Wei], optional): Gas limit. Defaults to None.
-            gas_price (Optional[Wei], optional): Gas price. Defaults to None.
+            max_fee (Wei, optional): The maximum fee per gas. Defaults to None.
+            max_priority_fee: (Wei, optional) The maximum priority fee per gas. Defaults to None.
+            validate_status (bool, optional): Whether to validate the transaction status. Defaults to False.
 
         Returns:
             HexBytes: Transaction hash.

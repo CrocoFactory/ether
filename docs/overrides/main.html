@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block extrahead %}
+<meta name="keywords" content='web3, ethereum, blockchain, web3.py, ethereum-python, eth, crypto, defi, dex, ether.py, pyether, ether-py,'>
+{% endblock %}
+
+{% block announce %}
+<div class="announce-wrapper">
+  <div id="announce-left">
+    <div class="item">
+      <a class="announce-link" href="https://x.com/CrocoFactory" target="_blank">
+        <span class="twemoji twitter">
+          {% include ".icons/fontawesome/brands/x-twitter.svg" %}
+        </span> Follow <strong>@CrocoFactory</strong> on <strong>Twitter</strong> to explore Ether
+      </a>
+    </div>
+  </div>
+  <div id="announce-right" style="position: relative;">
+    <div class="item">
+      <a title="CrocoFactory: Crafting dev-friendly solutions" style="display: block; position: relative;" href="https://crocofactory.dev" target="_blank">
+        <span class="sponsor-badge">sponsor</span>
+        <img class="sponsor-image" src="/img/sponsors/croco_banner.svg" />
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

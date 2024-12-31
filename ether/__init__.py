@@ -5,7 +5,7 @@ The web3.py operation wrapper, offering interaction through Wallet instances.
 
 Usage example:
    >>> from ether import Wallet
-   ... my_wallet = Wallet('your_private_key', 'Ethereum')
+   ... my_wallet = Wallet('0xPrivateKey', 'Ethereum')
    ... provider = my_wallet.provider
    ... recipient = '0xe977Fa8D8AE7D3D6e28c17A868EF04bD301c583f'
    ... 
