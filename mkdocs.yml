@@ -54,7 +54,7 @@ theme:
 extra:
   analytics:
     provider: google
-#    property: G-BBNVDQKG5R
+    property: G-H460ESFZW8
     feedback:
       title: Was this page helpful?
       ratings:
