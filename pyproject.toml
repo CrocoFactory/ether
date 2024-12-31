@@ -1,6 +1,6 @@
 [tool.poetry]
 name = 'pyether'
-version = '0.3.0'
+version = '0.3.1'
 description = 'The python package for interacting with Ethereum.'
 authors = ['Alexey <axbelenkov@gmail.com>']
 license = 'MIT'
