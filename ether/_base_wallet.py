@@ -373,7 +373,7 @@ class _BaseWallet(ABC):
         chain_id = provider.eth.chain_id
         if network.chain_id is not None and chain_id != network.chain_id:
             raise ValueError(f'Chain id of {Network} info must be equal to the actual chain`s id. Try to find it by: '
-                             f'https://chainlist.org/?search={network["network"].lower()}')
+                             f'https://chainlist.org/?search={network.name.lower()}')
         else:
             network.chain_id = chain_id
 
