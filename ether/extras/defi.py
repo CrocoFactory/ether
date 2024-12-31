@@ -9,7 +9,14 @@ WalletT = TypeVar('WalletT', AsyncWallet, Wallet)
 
 
 class Defi(ABC):
-    """Abstract base class for interacting with decentralized finance (DeFi) protocols."""
+    """
+    Abstract base class for implementing classes interacting decentralized finance (DeFi) protocols.
+
+    Args:
+        wallet: An instance of ether.AsyncWallet or ether.Wallet.
+        name:  Name of the specific DeFi.
+        version: Optional version number of the DeFi protocol
+    """
 
     def __init__(
             self,
@@ -17,12 +24,6 @@ class Defi(ABC):
             name: str,
             version: Optional[int] = None
     ):
-        """
-        Args:
-            wallet: An instance of ether.AsyncWallet or ether.Wallet.
-            name:  Name of the specific DeFi.
-            version: Optional version number of the DeFi protocol
-        """
         self.__wallet = wallet
         self._network = wallet.network
         self._name = name
@@ -30,20 +31,20 @@ class Defi(ABC):
 
     @property
     def wallet(self) -> WalletT:
-        """ Returns: The wallet instance associated with this DeFi instance."""
+        """The wallet instance associated with this DeFi instance."""
         return self.__wallet
 
     @property
     def network(self) -> Network:
-        """Returns: Model containing information about the network."""
+        """Current network of Defi represented as [`Network`][ether.Network] instance"""
         return self._network
 
     @property
     def provider(self) -> Union[Web3, AsyncWeb3]:
-        """Returns: Get the AsyncWeb3/Web3 provider associated with the wallet instance."""
+        """Gets the AsyncWeb3/Web3 provider associated with the wallet instance."""
         return self.wallet.provider
 
     @property
     def version(self) -> Optional[int]:
-        """Returns: The version number of the DeFi protocol."""
+        """The version number of the DeFi protocol."""
         return self._version

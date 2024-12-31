@@ -212,13 +212,13 @@ class _BaseWallet(ABC):
     @classmethod
     def create(cls, network: Network | str = 'Ethereum') -> Self:
         """
-        Creates a new digital wallet.
+        Creates a new ethereum account and associated Wallet | AsyncWallet instance.
 
         Args:
-            network (Network | str): Name of supported network or a custom network object.
+            network: The name of the built-in Ethereum-based network or custom network configuration
 
         Returns:
-            Self: Instance of AsyncWallet.
+            Self: Instance of Wallet | AsyncWallet.
         """
         private_key = Account.create().key
         return cls(private_key, network)
@@ -236,20 +236,20 @@ class _BaseWallet(ABC):
     @property
     def network(self) -> Network:
         """
-        Gets the current network.
+        Gets the current [Network][ether.Network] instance.
 
         Returns:
-            Network: The current network.
+            Network: The current network instance.
         """
         return self._network
 
     @network.setter
     def network(self, value: Network | str) -> None:
         """
-        Sets the network of the wallet.
+        Sets the [Network][ether.Network] of the wallet.
 
         Args:
-            value (Network | str): Name of supported network or a custom network object.
+            value: Name of built-innetwork or a custom network configuration.
         """
         is_async = self.__is_async
 
@@ -273,47 +273,47 @@ class _BaseWallet(ABC):
     @property
     def private_key(self) -> str:
         """
-        Returns the private key of the current account.
+        Returns the account's key required for making (signing) transactions.
 
         Returns:
-            str: Private key of the current account.
+            str: Account's key required for making (signing) transactions.
         """
         return self.__private_key
 
     @property
     def public_key(self) -> ChecksumAddress:
         """
-        Returns the public key of the current account.
+        Returns the account's key used for sharing payment details.
 
         Returns:
-            ChecksumAddress: Public key of the current account.
+            ChecksumAddress: The account's key used for sharing payment details.
         """
         return self.__public_key
 
     @property
     def nonce(self) -> int:
         """
-        Returns the nonce of the current wallet.
+        Returns the account's overall number of transactions.
 
         Returns:
-            int: Nonce of the current wallet.
+            int: Account's overall number of transactions.
         """
         return self._nonce
 
     @property
     def native_token(self) -> str:
         """
-        Gets the native token of the network.
+        Gets the native token of the current network.
 
         Returns:
-            str: The native token.
+            str: The native token of the current network.
         """
         return self.network.token
 
     @classmethod
     def network_map(cls) -> dict[str, Network]:
         """
-        Returns a copy of the network map.
+        Returns a copy of the network map, containing information about built-in networks.
 
         Returns:
             dict[str, Network]: The network map.
@@ -325,7 +325,7 @@ class _BaseWallet(ABC):
         Checks if the token is the native token of the network.
 
         Args:
-            token (str): Token symbol.
+            token: Token symbol.
 
         Returns:
             bool: True if the token is native, False otherwise.
@@ -353,7 +353,7 @@ class _BaseWallet(ABC):
         if isinstance(network, str) and network in mapping.keys():
             network = mapping[network]
         elif not isinstance(network, Network):
-            raise TypeError(f"Network must be a {Network} object or name of a supported "
+            raise TypeError(f"Network must be a {Network} object or name of a built-in "
                             f"network. Actual type: {type(network)}")
 
         return network
@@ -422,7 +422,7 @@ class _BaseWallet(ABC):
         Returns the explorer URL for the given transaction hash.
 
         Args:
-            tx_hash (HexBytes | str): Transaction hash.
+            tx_hash: Transaction hash.
 
         Returns:
             str: Explorer URL for the transaction.
